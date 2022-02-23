@@ -90,7 +90,7 @@ class ClickhouseConnector implements Connector {
 
     private function sendQuery(string $query, array $params = array(), string $format = 'TabSeparatedWithNamesAndTypes') {
         $query = trim($query, " \t\n\r\0\x0B;");
-        $query = urlencode(self::emulateBindParam($query, $params));
+        $query = self::emulateBindParam($query, $params);
         $host = urlencode($this->config['host']);
         $port = urlencode($this->config['port']);
         $database = urlencode($this->config['database']);
