@@ -16,10 +16,10 @@ interface SelectResult {
      * @return Collection Collection of row
      */
 
-    public function fetchAll(int $limit = NULL): Collection;
+    public function get(int $limit = NULL): array;
 
     /**
      * @return array of row
      */
-    public function fetchOne(): array;
+    public function first(): array;
 }

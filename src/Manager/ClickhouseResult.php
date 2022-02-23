@@ -68,16 +68,15 @@ class ClickHouseResult implements SelectResult {
     /**
      * @param int|null $limit
      *
-     * @return Collection Collection of row
+     * @return array Collection of row
      */
 
-    public function fetchAll(int $limit = NULL): Collection {
+    public function get(int $limit = NULL): array {
         $rows = $this->getRows($limit);
 
         $out = [];
         foreach ($rows as $row) {
             $out = $row;
-            break;
         }
 
         return $out;
@@ -86,7 +85,7 @@ class ClickHouseResult implements SelectResult {
     /**
      * @return array Collection of row
      */
-    public function fetchOne(int $limit = NULL): array {
+    public function first(int $limit = NULL): array {
         $rows = $this->getRows($limit);
         $out = [];
         foreach ($rows as $row) {
