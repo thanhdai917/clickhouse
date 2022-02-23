@@ -90,7 +90,7 @@ class ClickhouseConnector implements Connector {
 
     private function sendQuery(string $query, array $params = array(), string $format = 'TabSeparatedWithNamesAndTypes') {
         $query = trim($query, " \t\n\r\0\x0B;");
-        $query = self::emulateBindParam($query, $params);
+        $query = urlencode(self::emulateBindParam($query, $params));
         $host = urlencode($this->config['host']);
         $port = urlencode($this->config['port']);
         $database = urlencode($this->config['database']);
@@ -191,6 +191,11 @@ class ClickhouseConnector implements Connector {
      */
 
     private function getTotalItems(string $query): int {
+        preg_match(';(^SELECT|^select)(.*)(FROM|from)(.*?);U', $query, $regex);
+
+        $regex[2] = "count(*) as total";
+        unset($regex[0]);
+        $query = implode(' ', $regex);
         $response = $this->sendQuery($query, []);
         $queryConnector = new ClickHouseResult(
             $response,

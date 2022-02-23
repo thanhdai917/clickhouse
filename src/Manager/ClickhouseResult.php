@@ -4,6 +4,7 @@ namespace Sk3\Clickhouse\Manager;
 use ClickHouseDB\Exception\DatabaseException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use JetBrains\PhpStorm\ArrayShape;
 use Sk3\Clickhouse\Column;
 use Sk3\Clickhouse\Connector;
 use Sk3\Clickhouse\DBConnectorException;
