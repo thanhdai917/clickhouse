@@ -109,6 +109,7 @@ class ClickhouseConnector implements Connector {
             $bindParams
         );
     }
+
     static function convertToPHPType(string $nativeType): string {
         if (strpos($nativeType, 'Date') === 0) {
             return Column::TYPE_DATE_TIME;

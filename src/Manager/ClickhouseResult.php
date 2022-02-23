@@ -96,6 +96,11 @@ class ClickHouseResult implements SelectResult {
         return $out;
     }
 
+    public function count(): int {
+        $rows = $this->getRows();
+        return count($rows);
+    }
+
     public function getRows(int $limit = NULL): Collection {
         if ($limit === NULL) {
             $limit = 9999;
