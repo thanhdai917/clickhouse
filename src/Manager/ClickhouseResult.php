@@ -1,4 +1,5 @@
 <?php
+namespace Sk3\Clickhouse\Manager;
 
 use ClickHouseDB\Exception\DatabaseException;
 use Illuminate\Support\Collection;
@@ -8,7 +9,7 @@ use Sk3\Clickhouse\DBConnectorException;
 use Sk3\Clickhouse\Manager\ClickhouseConnector;
 use Sk3\Clickhouse\SelectResult;
 
-class ClickHouseSelectResult implements SelectResult {
+class ClickHouseResult implements SelectResult {
 
     const SPECIAL_CHARS = [
         '\N' => NULL,

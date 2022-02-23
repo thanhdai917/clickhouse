@@ -4,6 +4,7 @@ namespace Sk3\Clickhouse\Manager;
 use Sk3\Clickhouse\Column;
 use Sk3\Clickhouse\Connector;
 use Sk3\Clickhouse\Util\EmulateBindParam;
+use Sk3\Clickhouse\Manager\ClickHouseSelectResult;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -99,6 +100,14 @@ class ClickhouseConnector implements Connector {
         return $response->getBody()->detach();
     }
 
+    public function select($sql, $bindParams = []) {
+        $response = $this->sendQuery($sql, $bindParams);
+        return new ClickHouseResult(
+            $response,
+            $sql,
+            $bindParams
+        );
+    }
     static function convertToPHPType(string $nativeType): string {
         if (strpos($nativeType, 'Date') === 0) {
             return Column::TYPE_DATE_TIME;
