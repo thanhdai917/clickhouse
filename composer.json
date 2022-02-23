@@ -1,0 +1,23 @@
+{
+    "name": "sk3/clickhouse",
+    "description": "Module Clickhouse",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "illuminate/http": "~9.0",
+        "php": ">=8.0",
+        "ext-json": "*",
+        "guzzlehttp/guzzle": "^7.0.1",
+        "smi2/phpclickhouse": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Sk3\\Clickhouse\\": "src/"
+        },
+        "files": [
+            "src/helpers/database_connector.php"
+        ]
+    },
+    "minimum-stability": "dev", 
+    "prefer-stable": true
+}
