@@ -175,9 +175,9 @@ class ClickhouseConnector implements Connector {
         );
         $totalResult = $queryConnector->get();
         return [
-            'totalItem' => $totalItem,
-            'itemsPerPage' => $itemsPerPage,
-            'totalPage' => $totalPage,
+            'totalItem' => (int) $totalItem,
+            'itemsPerPage' => (int) $itemsPerPage,
+            'totalPage' => (int) $totalPage,
             'currentPage' => $currentPage,
             'result' => $totalResult
         ];
