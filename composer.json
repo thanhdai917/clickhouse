@@ -8,7 +8,7 @@
             "Sk3\\Clickhouse\\": "src/"
         },
         "files": [
-            "src/helpers/database_connector.php"
+            "helpers/database_connector.php"
         ]
     },
     "minimum-stability": "dev", 
