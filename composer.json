@@ -3,13 +3,6 @@
     "description": "Module Clickhouse",
     "type": "library",
     "license": "MIT",
-    "require": {
-        "illuminate/http": "~9.0",
-        "php": ">=8.0",
-        "ext-json": "*",
-        "guzzlehttp/guzzle": "^7.0.1",
-        "smi2/phpclickhouse": "dev-master"
-    },
     "autoload": {
         "psr-4": {
             "Sk3\\Clickhouse\\": "src/"
@@ -19,5 +12,11 @@
         ]
     },
     "minimum-stability": "dev", 
-    "prefer-stable": true
+    "require": {
+        "illuminate/http": "~9.0",
+        "php": ">=8.0",
+        "ext-json": "*",
+        "guzzlehttp/guzzle": "^7.0.1",
+        "smi2/phpclickhouse": "dev-master"
+    }
 }
