@@ -6,10 +6,7 @@
     "autoload": {
         "psr-4": {
             "Sk3\\Clickhouse\\": "src/"
-        },
-        "files": [
-            "helpers/database_connector.php"
-        ]
+        }
     },
     "minimum-stability": "dev", 
     "require": {

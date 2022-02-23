@@ -47,7 +47,7 @@ trait EmulateBindParam {
             $rawValue = $bindParams[$paramName] ?? $defaultValue;
             if (
                 $prefix == '$'
-                && ($value = parseBindParamValue($rawValue)[1])
+                && ($value = self::parseBindParamValue($rawValue)[1])
                 && !preg_match('/^[a-zA-Z0-9_]+$/', $value)
             ) {
                 throw new DBConnectorException("unsafe bind params is not allow" . PHP_EOL . "{$paramName} = {$value} ");
@@ -62,5 +62,26 @@ trait EmulateBindParam {
             );
         }
         return $query;
+    }
+
+    static function parseBindParamValue(string $value): array {
+        $paramTypePattern = '/^(?:(String|Int|Float|Date|Datetime|Boolean|Expression)(\[\])?:)?(.+)$/';
+        preg_match($paramTypePattern, $value, $matches);
+        if (preg_match($paramTypePattern, $value, $matches)) {
+            return [
+                // type => String|Int|Float|Date|Datetime|Boolean|Expression
+                $matches[1] ? $matches[1] : 'String',
+                // value => string
+                $matches[3],
+                // is an array (true => yes, false => no)
+                (bool) $matches[2],
+            ];
+        } else {
+            return [
+                'String',
+                '',
+                FALSE,
+            ];
+        }
     }
 }
