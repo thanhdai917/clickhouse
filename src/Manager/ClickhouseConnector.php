@@ -41,7 +41,7 @@ class ClickhouseConnector implements Connector {
     private $config;
 
     public function __construct(string $connectionString) {
-
+        $this->connect($connectionString);
     }
 
     public function connect(string $connectionString): Connector {
