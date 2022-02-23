@@ -76,7 +76,7 @@ class ClickHouseResult implements SelectResult {
 
         $out = [];
         foreach ($rows as $row) {
-            $out = $row;
+            $out[] = $row;
         }
 
         return $out;
