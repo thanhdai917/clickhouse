@@ -1,8 +1,12 @@
 <?php
 namespace Sk3\Clickhouse\Manager;
 
+use Illuminate\Support\Collection;
+use JetBrains\PhpStorm\ArrayShape;
 use Sk3\Clickhouse\Column;
 use Sk3\Clickhouse\Connector;
+use Sk3\Clickhouse\DBConnectorException;
+use Sk3\Clickhouse\SelectResult;
 use Sk3\Clickhouse\Util\EmulateBindParam;
 use Sk3\Clickhouse\Manager\ClickHouseSelectResult;
 use GuzzleHttp\Client;
@@ -40,10 +44,18 @@ class ClickhouseConnector implements Connector {
     ];
     private $config;
 
+    /**
+     * @throws ClickHouseConnectorException
+     */
     public function __construct(string $connectionString) {
         $this->connect($connectionString);
     }
 
+    /**
+     * @param string $connectionString
+     * @return Connector
+     * @throws ClickHouseConnectorException
+     */
     public function connect(string $connectionString): Connector {
         $config = json_decode($connectionString, true);
         if($config === null) {
@@ -67,7 +79,16 @@ class ClickhouseConnector implements Connector {
         return $this;
     }
 
-    private function sendQuery($query, $params = [], $format = 'TabSeparatedWithNamesAndTypes') {
+    /**
+     * @param string $query
+     * @param array $params
+     * @param string $format
+     * @return resource|null
+     * @throws ClickHouseConnectorException
+     * @throws DBConnectorException
+     */
+
+    private function sendQuery(string $query, array $params = array(), string $format = 'TabSeparatedWithNamesAndTypes') {
         $query = trim($query, " \t\n\r\0\x0B;");
         $query = self::emulateBindParam($query, $params);
         $host = urlencode($this->config['host']);
@@ -101,7 +122,13 @@ class ClickhouseConnector implements Connector {
         return $response->getBody()->detach();
     }
 
-    public function select($sql, $bindParams = []) {
+    /**
+     * @param string $sql
+     * @param array $bindParams
+     * @return ClickHouseResult
+     * @throws ClickHouseConnectorException
+     */
+    public function select(string $sql, array $bindParams = []): SelectResult {
         $response = $this->sendQuery($sql, $bindParams);
         return new ClickHouseResult(
             $response,
@@ -110,6 +137,10 @@ class ClickhouseConnector implements Connector {
         );
     }
 
+    /**
+     * @param string $nativeType
+     * @return Collection
+     */
     static function convertToPHPType(string $nativeType): string {
         if (strpos($nativeType, 'Date') === 0) {
             return Column::TYPE_DATE_TIME;
@@ -118,5 +149,55 @@ class ClickhouseConnector implements Connector {
             return self::TYPE_MAP[$nativeType];
         }
         return Column::TYPE_OTHERS;
+    }
+
+    /**
+     * @param string $query
+     * @param int $itemsPerPage
+     * @return array
+     * @throws ClickHouseConnectorException
+     * @throws DBConnectorException
+     */
+
+    #[ArrayShape(['totalItem' => "int", 'itemsPerPage' => "int", 'totalPage' => "float", 'currentPage' => "int", "result" => "array"])]
+    public function paginate(string $query, int $itemsPerPage): array {
+        $currentPage = 1;
+        $totalItem = $this->getTotalItems($query);
+        $totalPage = ceil($totalItem / $itemsPerPage);
+        $offset = ($currentPage - 1) * $itemsPerPage;
+
+        $query = $query . " LIMIT $offset, $itemsPerPage";
+        $response = $this->sendQuery($query, []);
+        $queryConnector = new ClickHouseResult(
+            $response,
+            $query,
+            []
+        );
+        $totalResult = $queryConnector->get();
+        return [
+            'totalItem' => $totalItem,
+            'itemsPerPage' => $itemsPerPage,
+            'totalPage' => $totalPage,
+            'currentPage' => $currentPage,
+            'result' => $totalResult
+        ];
+    }
+
+    /**
+     * @param string $query
+     * @return int
+     * @throws ClickHouseConnectorException
+     * @throws DBConnectorException
+     */
+
+    private function getTotalItems(string $query): int {
+        $response = $this->sendQuery($query, []);
+        $queryConnector = new ClickHouseResult(
+            $response,
+            $query,
+            []
+        );
+        $totalItem = $queryConnector->first();
+        return $totalItem['total'] ?? 0;
     }
 }

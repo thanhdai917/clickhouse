@@ -22,9 +22,4 @@ interface SelectResult {
      * @return array of row
      */
     public function first(): array;
-
-    /**
-     * @return int of row
-     */
-    public function count(): int;
 }

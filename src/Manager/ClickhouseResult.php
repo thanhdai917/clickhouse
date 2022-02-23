@@ -5,6 +5,7 @@ use ClickHouseDB\Exception\DatabaseException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Sk3\Clickhouse\Column;
+use Sk3\Clickhouse\Connector;
 use Sk3\Clickhouse\DBConnectorException;
 use Sk3\Clickhouse\Manager\ClickhouseConnector;
 use Sk3\Clickhouse\SelectResult;
@@ -96,11 +97,10 @@ class ClickHouseResult implements SelectResult {
         return $out;
     }
 
-    public function count(): int {
-        $rows = $this->getRows();
-        return count($rows);
-    }
-
+    /**
+     * @param int|null $limit
+     * @return Collection
+     */
     public function getRows(int $limit = NULL): Collection {
         if ($limit === NULL) {
             $limit = 9999;

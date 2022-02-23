@@ -10,4 +10,11 @@ interface Connector {
      * @return $this
      */
     public function connect(string $connectionString): Connector;
+
+    /**
+     * @param string $query
+     * @param int $itemsPerPage
+     * @return array
+     */
+    public function paginate(string $query, int $itemsPerPage): array;
 }
