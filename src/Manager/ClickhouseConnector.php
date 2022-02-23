@@ -64,6 +64,7 @@ class ClickhouseConnector implements Connector {
                 $e->getPrevious()
             );
         }
+        return $this;
     }
 
     private function sendQuery($query, $params = [], $format = 'TabSeparatedWithNamesAndTypes') {
