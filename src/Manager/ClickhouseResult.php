@@ -53,12 +53,7 @@ class ClickHouseResult implements SelectResult {
         try {
             $columns = collect();
             foreach ($this->columns as $column) {
-                $columns->push(
-                    new Column(
-                        $column['name'],
-                        ClickHouseConnector::convertToPHPType($column['type'])
-                    )
-                );
+                $columns->push($column['name']);
             }
             return $columns;
         } catch (DatabaseException $exception) {
