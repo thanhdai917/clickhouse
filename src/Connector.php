@@ -16,5 +16,5 @@ interface Connector {
      * @param int $itemsPerPage
      * @return array
      */
-    public function paginate(string $query, int $itemsPerPage): array;
+    public function paginate(string $query, int $itemsPerPage, int $page): array;
 }

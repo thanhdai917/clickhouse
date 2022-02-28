@@ -160,8 +160,8 @@ class ClickhouseConnector implements Connector {
      */
 
     #[ArrayShape(['totalItem' => "int", 'itemsPerPage' => "int", 'totalPage' => "float", 'currentPage' => "int", "result" => "array"])]
-    public function paginate(string $query, int $itemsPerPage): array {
-        $currentPage = 1;
+    public function paginate(string $query, int $itemsPerPage, int $page): array {
+        $currentPage = $page ?? 1;
         $totalItem = $this->getTotalItems($query);
         $totalPage = ceil($totalItem / $itemsPerPage);
         $offset = ($currentPage - 1) * $itemsPerPage;
