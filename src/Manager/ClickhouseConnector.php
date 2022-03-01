@@ -191,11 +191,17 @@ class ClickhouseConnector implements Connector {
      */
 
     private function getTotalItems(string $query): int {
-        preg_match(';(^SELECT|^select)(.*)(FROM|from)(.*?);U', $query, $regex);
+        preg_match(';(^SELECT|^select)(.*)(FROM|from)(.*)(WHERE|where)(.*)?((GROUP BY|group by)(.*))?((ORDER BY|order by)(.*?));U', $query, $regex);
 
         $regex[2] = "count(*) as total";
+        $queryMerge = [];
         unset($regex[0]);
-        $query = implode(' ', $regex);
+        foreach($regex as $key => $row) {
+            if($key <= 6) {
+                $queryMerge[] = $row;
+            }
+        }
+        $query = implode(' ', $queryMerge);
         $response = $this->sendQuery($query, []);
         $queryConnector = new ClickHouseResult(
             $response,
