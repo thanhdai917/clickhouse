@@ -213,6 +213,21 @@ class ClickhouseConnector implements Connector {
     }
 
 
+    static function convertToNativeType(string $type): string {
+        switch (strtolower($type)) {
+            case 'float':
+                return 'DOUBLE';
+            case 'integer':
+                return 'BIGINT';
+            case 'datetime':
+                return 'DateTime(\'UTC\')';
+            case 'time':
+            case 'string':
+            default:
+                return 'String';
+        }
+    }
+    
     public function createTable(string $tableName, array $columns): bool {
         $sqlColumns = [];
         foreach ($columns as $column) {
