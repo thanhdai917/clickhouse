@@ -17,4 +17,11 @@ interface Connector {
      * @return array
      */
     public function paginate(string $query, int $itemsPerPage, int $page): array;
+
+    /**
+     * @param string $tableName
+     * @param array $columns
+     * @return bool
+     */
+    public function createTable(string $tableName, array $columns): bool;
 }

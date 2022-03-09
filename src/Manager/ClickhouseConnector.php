@@ -211,4 +211,19 @@ class ClickhouseConnector implements Connector {
         $totalItem = $queryConnector->first();
         return $totalItem['total'] ?? 0;
     }
+
+
+    public function createTable(string $tableName, array $columns): bool {
+        $sqlColumns = [];
+        foreach ($columns as $column) {
+            if (!empty($columnName = $column["name"])) {
+                $sqlColumns[] = "`$columnName` " . self::convertToNativeType($column['type']);
+            } else {
+                throw new ClickHouseConnectorException("Wrong columns format: " . json_encode($columns));
+            }
+        }
+        $sql = "CREATE TABLE `$tableName` (" . implode(',', $sqlColumns) . ") ENGINE = StripeLog";
+        $result = $this->sendQuery($sql, [], '');
+        return true;
+    }
 }
