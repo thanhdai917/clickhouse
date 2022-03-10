@@ -24,4 +24,11 @@ interface Connector {
      * @return bool
      */
     public function createTable(string $tableName, array $columns): bool;
+
+
+    /**
+     * @param string $sql
+     * @return bool
+    */
+    public function write(string $sql): bool;
 }

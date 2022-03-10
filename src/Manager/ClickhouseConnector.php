@@ -241,4 +241,14 @@ class ClickhouseConnector implements Connector {
         $result = $this->sendQuery($sql, [], '');
         return true;
     }
+
+
+    /**
+     * @param string $sql
+     * @return bool
+    */
+    public function write(string $sql): bool {
+        $response = $this->sendQuery($sql, []);        
+        return true;
+    }
 }
