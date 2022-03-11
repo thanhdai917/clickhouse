@@ -1,12 +1,14 @@
 <?php
 namespace Sk3\Clickhouse\Manager;
 
+use ClickHouseDB\Exception\QueryException;
 use Illuminate\Support\Collection;
 use JetBrains\PhpStorm\ArrayShape;
 use Sk3\Clickhouse\Column;
 use Sk3\Clickhouse\Connector;
 use Sk3\Clickhouse\DBConnectorException;
 use Sk3\Clickhouse\SelectResult;
+use Sk3\Clickhouse\Util\CSVParsers;
 use Sk3\Clickhouse\Util\EmulateBindParam;
 use Sk3\Clickhouse\Manager\ClickHouseSelectResult;
 use GuzzleHttp\Client;
@@ -17,6 +19,7 @@ class ClickhouseConnector implements Connector {
     use EmulateBindParam;
     const DEFAULT_PORT = 8123;
     const DEFAULT_HOST = 'localhost';
+    const SUPPORTED_FORMATS = ['TabSeparated', 'TabSeparatedWithNames', 'CSV', 'CSVWithNames', 'JSONEachRow'];
     const TYPE_MAP = [
         'UInt8'       => Column::TYPE_NUMBER,
         'UInt16'      => Column::TYPE_NUMBER,
@@ -227,7 +230,11 @@ class ClickhouseConnector implements Connector {
                 return 'String';
         }
     }
-    
+
+    /**
+     * @throws DBConnectorException
+     * @throws ClickHouseConnectorException
+     */
     public function createTable(string $tableName, array $columns): bool {
         $sqlColumns = [];
         foreach ($columns as $column) {
@@ -246,9 +253,102 @@ class ClickhouseConnector implements Connector {
     /**
      * @param string $sql
      * @return bool
-    */
+     */
     public function write(string $sql): bool {
-        $response = $this->sendQuery($sql, []);        
+        try {
+            $response = $this->sendQuery($sql, []);
+        } catch (ClickHouseConnectorException|DBConnectorException $e) {
+            return false;
+        }
         return true;
+    }
+    /**
+     * @param        $table
+     * @param        $columns
+     * @param string $tabSeparatedData
+     *
+     * @return resource|null
+     * @throws ClickHouseConnectorException
+     */
+    private function bulkInsertQuery($table, $columns, string $tabSeparatedData) {
+        $columnNames = '`' . implode('`, `', $columns) . '`';
+        $queryParams = [
+            'database=' . urlencode($this->config['database']),
+            'input_format_tsv_empty_as_default=1',
+            'query=' . urlencode("INSERT INTO `$table` ($columnNames) FORMAT TabSeparated")
+        ];
+        $host = urlencode($this->config['host']);
+        $port = urlencode($this->config['port']);
+        $client = new Client([
+            'headers' => [
+                'X-ClickHouse-User' => $this->config['username'],
+                'X-ClickHouse-Key'  => $this->config['password'],
+                'Content-Type' => 'text/plain'
+            ]
+        ]);
+        $protocol = 'http';
+        if (!empty($this->config['secure'])) {
+            $protocol = 'https';
+        }
+        try {
+            $response = $client->post("$protocol://{$host}:{$port}/?" . implode('&', $queryParams), [
+                'body' => $tabSeparatedData,
+            ]);
+        } catch (BadResponseException $e) {
+            throw new ClickHouseConnectorException((string) $e->getResponse()->getBody());
+        } catch (GuzzleException $e) {
+            throw new ClickHouseConnectorException($e->getMessage());
+        }
+        return $response->getBody()->detach();
+    }
+
+    /**
+     * @param           $table
+     * @param CSVParsers $parser
+     * @param array $columns
+     * @return int total rows import
+     * @throws ClickHouseConnectorException
+     */
+    public function import($table, CSVParsers $parser, array $columns): int {
+        $total = 0;
+        $columnsName = array_map(function ($column) {
+            return $column['name'];
+        }, $columns);
+
+        $columnsIndex = array_map(function ($column) {
+            return $column['index'];
+        }, $columns);
+
+        while ($rows = $parser->fetchRows(1000, $columnsIndex)) {
+            $total += count($rows);
+            $tabSeparatedData = implode("\n", array_map(function ($row) {
+                return implode("\t", array_map(function ($col) {
+                    return str_replace([
+                        "\t",
+                        "\n"
+                    ], [
+                        '\t',
+                        '\n'
+                    ], trim($col));
+                }, $row));
+            }, $rows));
+            $this->bulkInsertQuery($table, $columnsName, $tabSeparatedData);
+        }
+        return $total;
+    }
+
+    /**
+     * @param string $table
+     * @return array
+     * @throws ClickHouseConnectorException
+     */
+    public function getTableDetail(string $table): array {
+        $result = $this->select("DESCRIBE $table", compact('table'));
+        return $result->getRows()->map(function ($row) {
+            return [
+                'name' => $row['name'],
+                'type' => $row['type'],
+            ];
+        })->toArray();
     }
 }
