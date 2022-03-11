@@ -110,7 +110,7 @@ class CSVParsers {
                 continue;
             }
             $filteredRow = [];
-            foreach ($columnsIndex as $index) {
+            foreach ($columnsIndex as $key => $index) {
                 if (isset($row[$index])) {
                     $filteredRow[] = $row[$index];
                 } else {

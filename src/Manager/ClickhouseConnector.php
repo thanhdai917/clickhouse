@@ -311,14 +311,8 @@ class ClickhouseConnector implements Connector {
      */
     public function import($table, CSVParsers $parser, array $columns): int {
         $total = 0;
-        $columnsName = array_map(function ($column) {
-            return $column['name'];
-        }, $columns);
-
-        $columnsIndex = array_map(function ($column) {
-            return $column['index'];
-        }, $columns);
-
+        $columnsName = $columns;
+        $columnsIndex = array_keys($parser->fetchRow());
         while ($rows = $parser->fetchRows(1000, $columnsIndex)) {
             $total += count($rows);
             $tabSeparatedData = implode("\n", array_map(function ($row) {
