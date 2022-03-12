@@ -163,9 +163,9 @@ class ClickhouseConnector implements Connector {
      */
 
     #[ArrayShape(['totalItem' => "int", 'itemsPerPage' => "int", 'totalPage' => "float", 'currentPage' => "int", "result" => "array"])]
-    public function paginate(string $query, int $itemsPerPage, int $page): array {
+    public function paginate(string $query, string $queryPaginate, int $itemsPerPage, int $page): array {
         $currentPage = $page ?? 1;
-        $totalItem = $this->getTotalItems($query);
+        $totalItem = $this->getTotalItems($queryPaginate);
         $totalPage = ceil($totalItem / $itemsPerPage);
         $offset = ($currentPage - 1) * $itemsPerPage;
 
@@ -194,17 +194,6 @@ class ClickhouseConnector implements Connector {
      */
 
     private function getTotalItems(string $query): int {
-        preg_match(';(^SELECT|^select)(.*)(FROM|from)(.*)(WHERE|where)(.*)?((GROUP BY|group by)(.*))?((ORDER BY|order by)(.*?));U', $query, $regex);
-
-        $regex[2] = "count(*) as total";
-        $queryMerge = [];
-        unset($regex[0]);
-        foreach($regex as $key => $row) {
-            if($key <= 6) {
-                $queryMerge[] = $row;
-            }
-        }
-        $query = implode(' ', $queryMerge);
         $response = $this->sendQuery($query, []);
         $queryConnector = new ClickHouseResult(
             $response,
