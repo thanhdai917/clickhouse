@@ -19,7 +19,7 @@ interface Connector {
      * @param int $page
      * @return array
      */
-    public function paginate(string $query, string $queryPaginate, int $itemsPerPage, int $page): array;
+    public function paginate(string $query, int $itemsPerPage, int $page): array;
 
     /**
      * @param string $tableName

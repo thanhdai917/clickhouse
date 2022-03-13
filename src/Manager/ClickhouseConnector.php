@@ -12,6 +12,7 @@ use Sk3\Clickhouse\Util\CSVParsers;
 use Sk3\Clickhouse\Util\EmulateBindParam;
 use Sk3\Clickhouse\Manager\ClickHouseSelectResult;
 use GuzzleHttp\Client;
+use ClickHouseDB\Client as ClickHouseDBClient;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -46,12 +47,14 @@ class ClickhouseConnector implements Connector {
         'Datetime64'  => Column::TYPE_DATE_TIME,
     ];
     private $config;
+    private $db;
 
     /**
      * @throws ClickHouseConnectorException
      */
     public function __construct(string $connectionString) {
         $this->connect($connectionString);
+        $this->connectWithSmi2();
     }
 
     /**
@@ -60,6 +63,7 @@ class ClickhouseConnector implements Connector {
      * @throws ClickHouseConnectorException
      */
     public function connect(string $connectionString): Connector {
+        ini_set('memory_limit', '-1');
         $config = json_decode($connectionString, true);
         if($config === null) {
             throw new ClickHouseConnectorException('Wrong format json');
@@ -82,6 +86,24 @@ class ClickhouseConnector implements Connector {
         return $this;
     }
 
+    public function connectWithSmi2() {
+        $host = urlencode($this->config['host']);
+        $port = urlencode($this->config['port']);
+        $database = urlencode($this->config['database']);
+
+        $config = [
+            'host' => $host,
+            'port' => $port,
+            'username' => $this->config['username'],
+            'password' => $this->config['password']
+        ];
+
+        $this->db = new ClickHouseDBClient($config);
+        $this->db->database($database);
+        $this->db->setTimeout(1.5);      // 1500 ms
+        $this->db->setTimeout(10);       // 10 seconds
+        $this->db->setConnectTimeOut(5);
+    }
     /**
      * @param string $query
      * @param array $params
@@ -92,6 +114,7 @@ class ClickhouseConnector implements Connector {
      */
 
     private function sendQuery(string $query, array $params = array(), string $format = 'TabSeparatedWithNamesAndTypes') {
+        ini_set('memory_limit', '-1');
         $query = trim($query, " \t\n\r\0\x0B;");
         $query = self::emulateBindParam($query, $params);
         $host = urlencode($this->config['host']);
@@ -112,7 +135,7 @@ class ClickhouseConnector implements Connector {
         if (!empty($this->config['protocol'])) {
             $protocol = 'https';
         }
-
+        
         try {
             $response = $client->post("$protocol://{$host}:{$port}/?database={$database}", [
                 'body' => $query,
@@ -163,12 +186,12 @@ class ClickhouseConnector implements Connector {
      */
 
     #[ArrayShape(['totalItem' => "int", 'itemsPerPage' => "int", 'totalPage' => "float", 'currentPage' => "int", "result" => "array"])]
-    public function paginate(string $query, string $queryPaginate, int $itemsPerPage, int $page): array {
+    public function paginate(string $query, int $itemsPerPage, int $page): array {
+        ini_set('memory_limit', '-1');
         $currentPage = $page ?? 1;
-        $totalItem = $this->getTotalItems($queryPaginate);
+        $totalItem = $this->getTotalItems($query);
         $totalPage = ceil($totalItem / $itemsPerPage);
         $offset = ($currentPage - 1) * $itemsPerPage;
-
         $query = $query . " LIMIT $offset, $itemsPerPage";
         $response = $this->sendQuery($query, []);
         $queryConnector = new ClickHouseResult(
@@ -194,14 +217,11 @@ class ClickhouseConnector implements Connector {
      */
 
     private function getTotalItems(string $query): int {
-        $response = $this->sendQuery($query, []);
-        $queryConnector = new ClickHouseResult(
-            $response,
-            $query,
-            []
-        );
-        $totalItem = $queryConnector->first();
-        return $totalItem['total'] ?? 0;
+        $this->db->setTimeout(500);
+        $this->db->setConnectTimeOut(5);
+        ini_set('memory_limit', '-1');
+        $response = $this->db->select($query)->count();
+        return $response ?? 0;
     }
 
 
