@@ -47,4 +47,13 @@ interface Connector {
      * @return array
      */
     public function getTableDetail(string $table): array;
+
+    /**
+     * @param string $query
+     * @return int
+     * @throws ClickHouseConnectorException
+     * @throws DBConnectorException
+     */
+
+    public function getTotalItems(string $query): int;
 }

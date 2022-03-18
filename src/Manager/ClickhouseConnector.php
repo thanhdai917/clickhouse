@@ -216,7 +216,7 @@ class ClickhouseConnector implements Connector {
      * @throws DBConnectorException
      */
 
-    private function getTotalItems(string $query): int {
+    public function getTotalItems(string $query): int {
         $this->db->setTimeout(500);
         $this->db->setConnectTimeOut(5);
         ini_set('memory_limit', '-1');
@@ -286,7 +286,7 @@ class ClickhouseConnector implements Connector {
             'input_format_tsv_empty_as_default=1',
             'query=' . urlencode("INSERT INTO `$table` ($columnNames) FORMAT TabSeparated")
         ];
-        $host = urlencode($this->config['host']);
+            $host = urlencode($this->config['host']);
         $port = urlencode($this->config['port']);
         $client = new Client([
             'headers' => [
